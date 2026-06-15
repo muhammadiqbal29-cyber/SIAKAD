@@ -1,0 +1,222 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+// ==========================================
+// 1. Core Entities (Multi-tenant Yayasan)
+// ==========================================
+
+enum Role {
+  SUPERADMIN  // Pengurus Yayasan (Bisa melihat semua unit)
+  ADMIN       // Kepala Sekolah / Tata Usaha (Hanya unitnya)
+  TEACHER     // Guru
+  STUDENT     // Siswa
+  PARENT      // Orang Tua
+}
+
+model School {
+  id        String   @id @default(cuid())
+  name      String   // misal: SD Islam Bintang, SMP Islam Bintang
+  level     String   // SD, SMP, SMA
+  npsn      String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users     User[]
+  classes   Class[]
+  subjects  Subject[]
+}
+
+// ==========================================
+// 2. Users & Authentication
+// ==========================================
+
+model User {
+  id        String   @id @default(cuid())
+  schoolId  String?  // Null jika dia SUPERADMIN (Yayasan)
+  role      Role     @default(STUDENT)
+  name      String
+  email     String?  @unique
+  password  String   // Hashed password
+  
+  // Spesifik untuk Siswa (Dapodik Integration)
+  nisn      String?  @unique
+  
+  // Spesifik untuk Guru (Dapodik Integration)
+  nuptk     String?  @unique
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  school    School?  @relation(fields: [schoolId], references: [id])
+  
+  // Relasi Data
+  classesHandled  Class[]          @relation("ClassTeacher")
+  schedulesHandled Schedule[]      @relation("TeacherSchedules")
+  enrollments     Enrollment[]
+  invoices        Invoice[]
+  formativeScores FormativeScore[]
+  attendances     Attendance[]
+  p5Scores        P5Score[]
+}
+
+// ==========================================
+// 3. Academic & Curriculum Management
+// ==========================================
+
+model AcademicYear {
+  id        String   @id @default(cuid())
+  year      String   // misal: "2024/2025"
+  semester  Int      // 1 (Ganjil) atau 2 (Genap)
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  classes   Class[]
+}
+
+model Class {
+  id             String   @id @default(cuid())
+  schoolId       String
+  academicYearId String
+  name           String   // misal: "X MIPA 1"
+  gradeLevel     Int      // 1 hingga 12
+  homeroomId     String?  // ID Guru (Wali Kelas)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  school         School       @relation(fields: [schoolId], references: [id])
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+  homeroom       User?        @relation("ClassTeacher", fields: [homeroomId], references: [id])
+  
+  enrollments    Enrollment[]
+  schedules      Schedule[]
+  formativeScores FormativeScore[]
+  attendances     Attendance[]
+  p5Scores        P5Score[]
+}
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  classId   String
+  studentId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  class     Class @relation(fields: [classId], references: [id])
+  student   User  @relation(fields: [studentId], references: [id])
+
+  // Seorang siswa hanya boleh masuk 1 kelas di tahun ajaran yg sama
+  @@unique([classId, studentId])
+}
+
+// ==========================================
+// 4. Grading (Kurikulum Merdeka)
+// ==========================================
+
+model FormativeScore {
+  id          String   @id @default(cuid())
+  studentId   String
+  classId     String
+  subjectId   String
+  tpName      String   // Tujuan Pembelajaran (TP)
+  score       Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  student     User     @relation(fields: [studentId], references: [id])
+  class       Class    @relation(fields: [classId], references: [id])
+  subject     Subject  @relation(fields: [subjectId], references: [id])
+  
+  @@unique([studentId, classId, subjectId, tpName])
+}
+
+model Attendance {
+  id          String   @id @default(cuid())
+  studentId   String
+  classId     String
+  date        String   // Format YYYY-MM-DD
+  status      String   // PRESENT, SICK, EXCUSED, ABSENT
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  student     User     @relation(fields: [studentId], references: [id])
+  class       Class    @relation(fields: [classId], references: [id])
+  
+  @@unique([studentId, classId, date])
+}
+
+model P5Score {
+  id          String   @id @default(cuid())
+  studentId   String
+  classId     String
+  projectName String   
+  dimension   String   
+  score       String   
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  student     User     @relation(fields: [studentId], references: [id])
+  class       Class    @relation(fields: [classId], references: [id])
+
+  @@unique([studentId, classId, projectName, dimension])
+}
+
+// ==========================================
+// 5. Finance (Manual Payment)
+// ==========================================
+
+model Invoice {
+  id          String   @id @default(cuid())
+  studentId   String
+  amount      Float
+  title       String   // misal: "SPP Juli 2026"
+  type        String   // misal: "SPP", "UANG_GEDUNG"
+  status      String   @default("UNPAID") // "UNPAID" atau "PAID"
+  dueDate     DateTime?
+  paidAt      DateTime?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  student     User @relation(fields: [studentId], references: [id])
+}
+
+model Subject {
+  id          String   @id @default(cuid())
+  schoolId    String
+  name        String
+  code        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  school      School   @relation(fields: [schoolId], references: [id])
+  schedules   Schedule[]
+  formativeScores FormativeScore[]
+}
+
+model Schedule {
+  id             String   @id @default(cuid())
+  classId        String
+  subjectId      String
+  teacherId      String
+  dayOfWeek      Int
+  startTime      String
+  endTime        String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  class          Class    @relation(fields: [classId], references: [id])
+  subject        Subject  @relation(fields: [subjectId], references: [id])
+  teacher        User     @relation("TeacherSchedules", fields: [teacherId], references: [id])
+}
+
