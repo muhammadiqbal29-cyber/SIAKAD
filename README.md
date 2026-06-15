@@ -6,7 +6,11 @@
 
 > **🚀 LIVE DEMO:** Coba aplikasinya sekarang di [https://siakad-demo-pearl.vercel.app/](https://siakad-demo-pearl.vercel.app/)
 > 
-> *Database otomatis di-reset setiap tengah malam (00:00 UTC) ke kondisi awal.*
+> **Kredensial Login (Admin):**
+> - **Email:** `admin@yayasan.com`
+> - **Password:** `admin123`
+> 
+> *Catatan: Segala perubahan data pada versi Live Demo ini bersifat sementara. Database akan otomatis di-reset ke kondisi awal setiap tengah malam (00:00 UTC).*
 Selamat datang di **SIAKAD**. Ini adalah Sistem Informasi Akademik *full-stack* yang saya kembangkan untuk menyelesaikan berbagai kendala administrasi sekolah yang seringkali tersebar di banyak platform.
 
 Aplikasi ini mendukung multi-hak akses (Admin, Guru, dan Siswa) dan mencakup siklus akademik secara menyeluruh: mulai dari pendaftaran peserta didik baru (PPDB), penilaian Kurikulum Merdeka, hingga manajemen tagihan SPP. Seluruh ekosistem ini dibangun menggunakan Next.js App Router, Prisma, dan PostgreSQL.
