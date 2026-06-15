@@ -1,5 +1,7 @@
 # SIAKAD 🏫
 
+![CI/CD Pipeline](https://github.com/muhammadiqbal29-cyber/SIAKAD/actions/workflows/ci.yml/badge.svg)
+
 ![Landing Page](/public/screenshots/landing.png)
 
 Selamat datang di **SIAKAD**. Ini adalah Sistem Informasi Akademik *full-stack* yang saya kembangkan untuk menyelesaikan berbagai kendala administrasi sekolah yang seringkali tersebar di banyak platform.
