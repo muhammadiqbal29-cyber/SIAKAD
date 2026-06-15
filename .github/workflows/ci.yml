@@ -10,6 +10,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # Dummy variables specifically for passing Next.js build-time checks and Prisma config
+      DATABASE_URL: "postgresql://postgres:dummy@localhost:5432/dummy"
+      DIRECT_URL: "postgresql://postgres:dummy@localhost:5432/dummy"
+      NEXTAUTH_SECRET: "ci_dummy_secret_do_not_use_in_prod"
+      NEXTAUTH_URL: "http://localhost:3000"
 
     steps:
     - name: Checkout repository
@@ -29,8 +35,3 @@ jobs:
 
     - name: Build Next.js Application
       run: npm run build
-      env:
-        # Dummy variables specifically for passing Next.js build-time checks
-        DATABASE_URL: "postgresql://postgres:dummy@localhost:5432/dummy"
-        NEXTAUTH_SECRET: "ci_dummy_secret_do_not_use_in_prod"
-        NEXTAUTH_URL: "http://localhost:3000"
